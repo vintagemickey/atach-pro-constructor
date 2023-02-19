@@ -1,12 +1,12 @@
 import React from 'react'
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import ReactFlow, {
   MiniMap,
   Controls,
   Background,
-  useNodesState,
-  useEdgesState,
   addEdge,
+  applyNodeChanges,
+  applyEdgeChanges,
   ConnectionLineType,
 } from 'reactflow';
 
@@ -55,30 +55,11 @@ const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
 );
 
 function Flow() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(layoutedNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(layoutedEdges);
+  const [nodes, setNodes] = useState(layoutedNodes);
+  const [edges, setEdges] = useState(layoutedEdges);
 
-  const onConnect = useCallback(
-    (params) =>
-      setEdges((eds) =>
-        addEdge({ ...params, type: ConnectionLineType.Step }, eds)
-      ),
-    []
-  );
-  
-  const onLayout = useCallback(
-    (direction) => {
-      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-        nodes,
-        edges,
-        direction
-      );
-
-      setNodes([...layoutedNodes]);
-      setEdges([...layoutedEdges]);
-    },
-    [nodes, edges]
-  );
+  const onNodesChange = useCallback((changes) => setNodes((nds) => applyNodeChanges(changes, nds)), []);
+  const onEdgesChange = useCallback((changes) => setEdges((eds) => applyEdgeChanges(changes, eds)), []);
 
   //Кнопка добавления новых элементов
   const yPos = useRef(0);
@@ -86,19 +67,23 @@ function Flow() {
   const addNode = useCallback(() => {
     yPos.current += 50;
 
-    setNodes((layoutedNodes) => {
+    setNodes((nodes) => {
+      let maxId = nodes.length;
       return [
-        ...layoutedNodes,
+        ...nodes,
         {
-          id: Math.random(),
+          id: maxId + 1,
           position: { x: 100, y: yPos.current },
           data: { label: "Новый элемент" },
           width: nodeWidth,
           height: nodeHeight
         }
       ];
+    
     });
   }, []);
+
+  const onConnect = useCallback((edges) => setEdges((eds) => addEdge({ ...edges, type: ConnectionLineType.Step }, eds)), []);
 
     return (
         <ReactFlow
@@ -111,7 +96,6 @@ function Flow() {
         <MiniMap />
         <Controls />
         <Background />
-        
         <button onClick={addNode}>Add</button>
         </ReactFlow>
     );
