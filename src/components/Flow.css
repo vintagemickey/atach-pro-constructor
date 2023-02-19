@@ -1,0 +1,9 @@
+.react-flow {
+    height: 100vh !important;
+}
+
+button {
+    position: relative;
+    z-index: 999;
+    display: none;
+}
