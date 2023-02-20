@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useState, useEffect } from 'react';
 import ReactFlow, {
   useNodesState,
   useEdgesState,
@@ -62,6 +62,9 @@ const AddNodeOnEdgeDrop = () => {
   const { project } = useReactFlow();
   const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), []);
 
+  const [nodeName, setNodeName] = useState([]);
+  const [nodeBg, setNodeBg] = useState([]);
+
   const onConnectStart = useCallback((_, { nodeId }) => {
     connectingNodeId.current = nodeId;
   }, []);
@@ -82,14 +85,48 @@ const AddNodeOnEdgeDrop = () => {
         };
 
         setNodes((nds) => nds.concat(newNode));
-        setEdges((eds) => eds.concat({ id, source: connectingNodeId.current, target: id }));
+        setEdges((eds) => eds.concat({ id, source: connectingNodeId.current, target: id, type: 'step' }));
       }
     },
     [project]
   );
 
+  useEffect(() => {
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.selected) {
+          node.data = {
+            ...node.data,
+            label: nodeName,
+          };
+        }
+
+        return node;
+      })
+    );
+  }, [nodeName, setNodes]);
+
+  useEffect(() => {
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.selected) {
+          node.style = { ...node.style, backgroundColor: nodeBg };
+        }
+
+        return node;
+      })
+    );
+  }, [nodeBg, setNodes]);
+
   return (
     <div className="wrapper" ref={reactFlowWrapper}>
+      <div className="updatenode__controls">
+        <label>label:</label>
+        <input value={nodeName} onChange={(evt) => setNodeName(evt.target.value)} />
+
+        <label className="updatenode__bglabel">background:</label>
+        <input type="color" value={nodeBg} onChange={(evt) => setNodeBg(evt.target.value)} />
+      </div>
       <ReactFlow
         nodes={nodes}
         edges={edges}

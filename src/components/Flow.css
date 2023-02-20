@@ -2,7 +2,11 @@
     height: 100vh !important;
 }
 
-button {
-    position: relative;
+.updatenode__controls {
     z-index: 999;
+    margin-bottom: 20px;
+}
+
+.updatenode__bglabel {
+    margin-left: 10px;
 }
