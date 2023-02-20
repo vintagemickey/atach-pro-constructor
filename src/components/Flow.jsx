@@ -133,12 +133,12 @@ const AddNodeOnEdgeDrop = () => {
   return (
     <div className="wrapper" ref={reactFlowWrapper}>
       <div className="updatenode__controls">
-        <label>label:</label>
+        <label>Наименование: </label>
         <input value={nodeName} onChange={(evt) => setNodeName(evt.target.value)} />
 
-        <label className="updatenode__bglabel">background:</label>
+        <label className="updatenode__bglabel">Фон: </label>
         <input type="color" value={nodeBg} onChange={(evt) => setNodeBg(evt.target.value)} />
-        <button className="updatenode__alignitems" onClick={() => onLayout('TB')}>Align elements</button>
+        <button className="updatenode__alignitems" onClick={() => onLayout('TB')}>Выровнять</button>
       </div>
       <ReactFlow
         nodes={nodes}
