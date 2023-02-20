@@ -16,8 +16,8 @@ import './Flow.css';
 const dagreGraph = new dagre.graphlib.Graph();
 dagreGraph.setDefaultEdgeLabel(() => ({}));
 
-const nodeWidth = 172;
-const nodeHeight = 36;
+const nodeWidth = 180;
+const nodeHeight = 60;
 
 const getLayoutedElements = (nodes, edges, direction = 'TB', graphAlign = 'UL') => {
   dagreGraph.setGraph({ rankdir: direction, align: graphAlign });
@@ -74,12 +74,10 @@ const AddNodeOnEdgeDrop = () => {
       const targetIsPane = event.target.classList.contains('react-flow__pane');
 
       if (targetIsPane) {
-        // we need to remove the wrapper bounds, in order to get the correct position
         const { top, left } = reactFlowWrapper.current.getBoundingClientRect();
         const id = getId();
         const newNode = {
           id,
-          // we are removing the half of the node width (75) to center the new node
           position: project({ x: event.clientX - left - 75, y: event.clientY - top }),
           data: { label: `Node ${id}` },
         };
@@ -89,6 +87,20 @@ const AddNodeOnEdgeDrop = () => {
       }
     },
     [project]
+  );
+
+  const onLayout = useCallback(
+    (direction) => {
+      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
+        nodes,
+        edges,
+        direction
+      );
+
+      setNodes([...layoutedNodes]);
+      setEdges([...layoutedEdges]);
+    },
+    [nodes, edges]
   );
 
   useEffect(() => {
@@ -126,6 +138,7 @@ const AddNodeOnEdgeDrop = () => {
 
         <label className="updatenode__bglabel">background:</label>
         <input type="color" value={nodeBg} onChange={(evt) => setNodeBg(evt.target.value)} />
+        <button className="updatenode__alignitems" onClick={() => onLayout('TB')}>Align elements</button>
       </div>
       <ReactFlow
         nodes={nodes}

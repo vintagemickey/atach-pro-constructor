@@ -10,3 +10,18 @@
 .updatenode__bglabel {
     margin-left: 10px;
 }
+
+.react-flow .react-flow__handle {
+    width: 20px;
+    height: 7px;
+    border-radius: 1px;
+    background-color: #6f7be4;
+}
+
+.react-flow__node {
+    font-size: 16px;
+}
+
+.updatenode__alignitems {
+    margin-left: 10px;
+}
