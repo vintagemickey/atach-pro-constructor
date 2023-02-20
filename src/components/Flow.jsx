@@ -1,20 +1,17 @@
-import React from 'react'
-import { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef } from 'react';
 import ReactFlow, {
-  MiniMap,
-  Controls,
-  Background,
+  useNodesState,
+  useEdgesState,
   addEdge,
-  applyNodeChanges,
-  applyEdgeChanges,
-  ConnectionLineType,
+  useReactFlow,
+  ReactFlowProvider,
 } from 'reactflow';
+import 'reactflow/dist/style.css';
 
 import dagre from 'dagre';
 import { initialNodes, initialEdges } from '../nodes-edges.js';
 
-import 'reactflow/dist/style.css';
-import './Flow.css'
+import './Flow.css';
 
 const dagreGraph = new dagre.graphlib.Graph();
 dagreGraph.setDefaultEdgeLabel(() => ({}));
@@ -54,51 +51,60 @@ const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
   initialEdges
 );
 
-function Flow() {
-  const [nodes, setNodes] = useState(layoutedNodes);
-  const [edges, setEdges] = useState(layoutedEdges);
+let id = initialNodes.length + 1;
+const getId = () => `${id++}`;
 
-  const onNodesChange = useCallback((changes) => setNodes((nds) => applyNodeChanges(changes, nds)), []);
-  const onEdgesChange = useCallback((changes) => setEdges((eds) => applyEdgeChanges(changes, eds)), []);
+const AddNodeOnEdgeDrop = () => {
+  const reactFlowWrapper = useRef(null);
+  const connectingNodeId = useRef(null);
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const { project } = useReactFlow();
+  const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), []);
 
-  //Кнопка добавления новых элементов
-  const yPos = useRef(0);
-
-  const addNode = useCallback(() => {
-    yPos.current += 50;
-
-    setNodes((nodes) => {
-      let maxId = nodes.length;
-      return [
-        ...nodes,
-        {
-          id: maxId + 1,
-          position: { x: 100, y: yPos.current },
-          data: { label: "Новый элемент" },
-          width: nodeWidth,
-          height: nodeHeight
-        }
-      ];
-    
-    });
+  const onConnectStart = useCallback((_, { nodeId }) => {
+    connectingNodeId.current = nodeId;
   }, []);
 
-  const onConnect = useCallback((edges) => setEdges((eds) => addEdge({ ...edges, type: ConnectionLineType.Step }, eds)), []);
+  const onConnectEnd = useCallback(
+    (event) => {
+      const targetIsPane = event.target.classList.contains('react-flow__pane');
 
-    return (
-        <ReactFlow
+      if (targetIsPane) {
+        // we need to remove the wrapper bounds, in order to get the correct position
+        const { top, left } = reactFlowWrapper.current.getBoundingClientRect();
+        const id = getId();
+        const newNode = {
+          id,
+          // we are removing the half of the node width (75) to center the new node
+          position: project({ x: event.clientX - left - 75, y: event.clientY - top }),
+          data: { label: `Node ${id}` },
+        };
+
+        setNodes((nds) => nds.concat(newNode));
+        setEdges((eds) => eds.concat({ id, source: connectingNodeId.current, target: id }));
+      }
+    },
+    [project]
+  );
+
+  return (
+    <div className="wrapper" ref={reactFlowWrapper}>
+      <ReactFlow
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        >
-        <MiniMap />
-        <Controls />
-        <Background />
-        <button onClick={addNode}>Add</button>
-        </ReactFlow>
-    );
-}
+        onConnectStart={onConnectStart}
+        onConnectEnd={onConnectEnd}
+      />
+    </div>
+  );
+};
 
-export default Flow
+export default () => (
+  <ReactFlowProvider>
+    <AddNodeOnEdgeDrop />
+  </ReactFlowProvider>
+);
